@@ -1,8 +1,10 @@
 '''
 
-Freeway Simulator by Nick Peterson
-
-Simulates traffic on a generic freeway.
+---------------------------------------------
+|   Freeway Simulator by Nick Peterson      |
+|                                           |
+|   Simulates traffic on a generic freeway. |
+---------------------------------------------
 
 '''
 
@@ -29,6 +31,7 @@ nBUSLanes = 1
 
 #width of a lane.
 width = 12
+w = width
 
 #height of the window.
 winHeight = 750
@@ -44,7 +47,7 @@ class Vehicle:
 
     #constructs a new vehicle based on a variety of factors. x and y are a point in the top left corner of the vehicle.
     def __init__(self,lane,y,length,width,topSpeed,curSpeed,occupancy,distance):
-        self.x = lane*12
+        self.x = lane * w
         self.y = y
         self.length = length
         self.width = width
@@ -87,13 +90,10 @@ class Vehicle:
     def hasRightNeighbor(self):
         neighbors = [i for i in active if( (i.p2.x == self.x)  and ( (i.y <= self.y <= i.p2.y) or (i.y <= self.p2.y <= i.p2.y) or (self.y <= i.y <= self.p2.y) or (self.y <= i.p2.y <= self.p2.y) ) )]
 
-        """if self.p1.x == 0:
-            return True"""
-
-        if (int(self.p1.x / 12)) == 0:
+        if (int(self.p1.x / width)) == 0:
             return True
 
-        if not lanes[int(self.p1.x / 12) - 1].isPermitted(self):
+        if not lanes[int(self.p1.x / width) - 1].isPermitted(self):
             return True
 
         if neighbors:
@@ -104,13 +104,11 @@ class Vehicle:
     #returns whether Vehicle has a neighbor on its left (positive x).
     def hasLeftNeighbor(self):
         neighbors = [i for i in active if( (i.x == self.p2.x) and ( (i.y <= self.y <= i.p2.y) or (i.y <= self.p2.y <= i.p2.y) or (self.y <= i.y <= self.p2.y) or (self.y <= i.p2.y <= self.p2.y) ) )]
-        """if shoulder.p1.x == self.p2.x:
-            return True"""
 
-        if (int(self.p2.x / 12)) == len(lanes):
+        if (int(self.p2.x / width)) == len(lanes):
             return True
 
-        if not lanes[int(self.p2.x / 12)].isPermitted(self):
+        if not lanes[int(self.p2.x / width)].isPermitted(self):
             return True
 
         if neighbors:
@@ -130,18 +128,18 @@ class Vehicle:
         self.p1.x += width
         self.p2.x += width
         self.clear()
-        self.body.move(12,0)
-        self.cabin.move(12,0)
+        self.body.move(width,0)
+        self.cabin.move(width,0)
 
     #moves the vehicle one lane to the right.
     def moveRight(self):
-        if self.x >= 12:
+        if self.x >= width:
             self.x -= width
             self.p1.x -= width
             self.p2.x -= width
             self.clear()
-            self.body.move(-12,0)
-            self.cabin.move(-12,0)
+            self.body.move(-width,0)
+            self.cabin.move(-width,0)
 
     #checks the speed of the car and makes sure it will not collide with anything in front of it.
     def checkSpeed(self):
@@ -168,7 +166,7 @@ class Vehicle:
 
     #moves the Vehicle forward.
     def move(self,factor):
-        if not self.hasRightNeighbor() and self.x >= 12:
+        if not self.hasRightNeighbor() and self.x >= width:
             self.moveRight()
         self.checkSpeed()
         if(self.curSpeed / 10 * 15) > self.distanceFromCollision() * 15:
@@ -182,7 +180,7 @@ class Vehicle:
 #a car.
 class Car(Vehicle):
     def __init__(self,lane,y,topSpeed,curSpeed,distance):
-        super().__init__(lane,y,20,12,topSpeed,curSpeed,random.randint(1,5),distance)
+        super().__init__(lane,y,20,width,topSpeed,curSpeed,random.randint(1,5),distance)
         self.type = "car"
     def draw(self,window):
         super().draw(window)
@@ -192,13 +190,13 @@ class Car(Vehicle):
 #a truck.
 class Truck(Vehicle):
     def __init__(self,lane,y,distance):
-        super().__init__(lane,y,50,12,65,65,random.randint(1,3),distance)
+        super().__init__(lane,y,50,width,65,65,random.randint(1,3),distance)
         self.type = "truck"
 
 #a bus.
 class Bus(Vehicle):
     def __init__(self,lane,y,distance):
-        super().__init__(lane,y,40,12,70,70,random.randint(20,101),distance)
+        super().__init__(lane,y,40,width,70,70,random.randint(20,101),distance)
         self.type = "bus"
 
 #represents a lane.
@@ -207,7 +205,7 @@ class Lane:
     #constructor.
     def __init__(self,lane):
         self.lane = lane
-        self.x = lane * 12
+        self.x = lane * width
         self.type = "regular"
         lanes.append(self)
 
@@ -232,14 +230,14 @@ class HOV(Lane):
     #constructor.
     def __init__(self,lane):
         self.lane = lane
-        self.x = lane * 12
+        self.x = lane * width
         self.type = "HOV"
         lanes.append(self)
 
     #draws the lane with a light blue shade.
     def draw(self,window):
         super().draw(window)
-        rect = Rectangle(Point(self.x+1,0),Point(self.x+11,winHeight)).draw(window)
+        rect = Rectangle(Point(self.x+1,0),Point(self.x+(width-1),winHeight)).draw(window)
         rect.setFill("skyblue")
         rect.setOutline("skyblue")
 
@@ -260,7 +258,7 @@ class LV(Lane):
     #draws the lane with a light red shade.
     def draw(self,window):
         super().draw(window)
-        rect = Rectangle(Point(self.x + 1, 0), Point(self.x + 11, winHeight)).draw(window)
+        rect = Rectangle(Point(self.x + 1, 0), Point(self.x + (width-1), winHeight)).draw(window)
         rect.setFill("salmon")
         rect.setOutline("salmon")
 
@@ -281,7 +279,7 @@ class BUS(Lane):
     #draws the lane with a mild yellow shade.
     def draw(self,window):
         super().draw(window)
-        rect = Rectangle(Point(self.x + 1, 0), Point(self.x + 11, winHeight)).draw(window)
+        rect = Rectangle(Point(self.x + 1, 0), Point(self.x + (width-1), winHeight)).draw(window)
         rect.setFill("blanchedalmond")
         rect.setOutline("blanchedalmond")
 
