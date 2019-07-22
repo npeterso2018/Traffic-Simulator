@@ -18,13 +18,13 @@ active = []
 lanes = []
 
 #the number of regular lanes that the Vehicles are limited to each way.
-nLanes = 2
+nLanes = 3
 
 #the number of HOV lanes to create.
 nHOVLanes = 1
 
 #the number of LV lanes to create.
-nLVLanes = 2
+nLVLanes = 1
 
 #the number of BUS lanes to create.
 nBUSLanes = 1
@@ -45,6 +45,9 @@ shoulder = Line(Point(0,0), Point(0,winHeight))
 #data and information.
 passengers = 0
 passengerFlow = 0
+
+#how many turns in between each data drop.
+dataInterval = 25
 
 #represents a vehicle.
 class Vehicle:
@@ -348,6 +351,7 @@ def main():
         active[i].draw(win)
 
     n = 0
+    p = 0
     while active[-1].p2.y < winHeight:
         if n % 4 == 0:
             for j in range(nBUSLanes+nLVLanes,nLanes+nBUSLanes+nLVLanes):
@@ -361,7 +365,10 @@ def main():
                     Car(j,0,r,r,20)
         refresh(win)
         n += 1
-        if n % 50 == 0:
-            print("Passengers transported through simulation: " + str(passengers))
-
+        if n % dataInterval == 0:
+            passengerFlow = passengers - p
+            averagePassengerFlow = passengers / (n / dataInterval)
+            print("Passenger flow: " + str(passengerFlow) + " passengers have been transported through the simulation since last time, averaging " + str(averagePassengerFlow) + " every " + str(dataInterval) + " turns.")
+            print("Passengers transported through the simulation: " + str(passengers) + ".")
+            p = passengers
 main()
