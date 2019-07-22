@@ -36,11 +36,15 @@ w = width
 #height of the window.
 winHeight = 750
 
-#the inner limit of the lanes
+#the inner limit of the lanes.
 eLane = Line(Point((nLanes + nHOVLanes + nLVLanes + nBUSLanes) * width, 0), Point((nLanes + nHOVLanes + nLVLanes + nBUSLanes) * width, winHeight))
 
-#the outer limit of the lanes
+#the outer limit of the lanes.
 shoulder = Line(Point(0,0), Point(0,winHeight))
+
+#data and information.
+passengers = 0
+passengerFlow = 0
 
 #represents a vehicle.
 class Vehicle:
@@ -291,6 +295,11 @@ class BUS(Lane):
 
 #refreshes the entire scene.
 def refresh(window):
+    global passengers
+    toRemove = [i for i in active if(i.p1.y >= 750)]
+    for i in toRemove:
+        active.remove(i)
+        passengers += i.occupancy
     for i in range(len(active)):
         active[i].clear()
         active[i].move(0.25)
@@ -318,10 +327,10 @@ def main():
         HOV(i).draw(win)
         lanesTotal += 1
     for i in range(len(lanes)):
-        print(lanes[i].type + " at " + str(lanes[i].lane))
+        print("Created " + lanes[i].type + " at " + str(lanes[i].lane))
     eLane.draw(win)
     shoulder.draw(win)
-    Car(3,0,90,90,20)
+    """Car(3,0,90,90,20)
     t = Truck(1,80,20)
     Truck(3, 120, 20)
     Truck(4, 160, 20)
@@ -329,31 +338,30 @@ def main():
     s = Truck(3, 0, 20)
     Bus(3,220,20)
     s.curSpeed = 120
-    s.topSpeed = 120
+    s.topSpeed = 120"""
 
-    """for i in range(nLanes):
+    for i in range(nBUSLanes+nLVLanes,nLanes+nBUSLanes+nLVLanes):
         r=random.randint(55,95)
-        Car(i,0,r,r,20)"""
+        Car(i,0,r,r,20)
 
     for i in range(len(active)):
         active[i].draw(win)
 
-    while t.p2.y < winHeight:
-        refresh(win)
-
     n = 0
-    """while active[-1].p2.y < winHeight:
+    while active[-1].p2.y < winHeight:
         if n % 4 == 0:
-            for j in range(nLanes):
+            for j in range(nBUSLanes+nLVLanes,nLanes+nBUSLanes+nLVLanes):
                 c=random.randint(0,10)
-                if c == 9:
+                if c == (7 or 8 or 9):
                     Truck(j,0,20)
-                elif c == (4 or 5):
+                elif c == (4 or 5 or 6):
                     Bus(j,0,20)
                 else:
                     r=random.randint(55,95)
                     Car(j,0,r,r,20)
         refresh(win)
-        n += 1"""
+        n += 1
+        if n % 50 == 0:
+            print("Passengers transported through simulation: " + str(passengers))
 
 main()
