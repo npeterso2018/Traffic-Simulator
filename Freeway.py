@@ -18,7 +18,7 @@ active = []
 lanes = []
 
 #the number of regular lanes that the Vehicles are limited to each way.
-nLanes = 2
+nLanes = 1
 
 #the number of HOV lanes to create.
 nHOVLanes = 0
@@ -33,8 +33,9 @@ nBUSLanes = 0
 width = 16
 w = width
 
-#height of the window.
+#height and width of the window.
 winHeight = 750
+winWidth = 500
 
 #the inner limit of the lanes.
 eLane = Line(Point((nLanes + nHOVLanes + nLVLanes + nBUSLanes) * width, 0), Point((nLanes + nHOVLanes + nLVLanes + nBUSLanes) * width, winHeight))
@@ -326,7 +327,7 @@ def refresh(window):
 def main():
 
     #the graphics window to display the simulation.
-    win = GraphWin("I-95",500,winHeight)
+    win = GraphWin("I-95",winWidth,winHeight)
 
     lanesTotal = 0
 
@@ -347,15 +348,6 @@ def main():
         print("Created " + lanes[i].type + " at " + str(lanes[i].lane))
     eLane.draw(win)
     shoulder.draw(win)
-    """Car(3,0,90,90,20)
-    t = Truck(1,80,20)
-    Truck(3, 120, 20)
-    Truck(4, 160, 20)
-    Truck(5, 200, 20)
-    s = Truck(3, 0, 20)
-    Bus(3,220,20)
-    s.curSpeed = 120
-    s.topSpeed = 120"""
 
     for i in range(nBUSLanes+nLVLanes,nLanes+nBUSLanes+nLVLanes):
         r=random.randint(55,95)
@@ -366,20 +358,31 @@ def main():
 
     n = 0
     p = 0
+    averagePassengerFlow = 0
     while active[-1].p2.y < winHeight:
+        Tpassengers = Text(Point(winWidth / (4/3), 25), "Passenger count: " + str(passengers)).draw(win)
+        TaveragePassengerFlow = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 3.4), 40), "Passenger flow, updating every " + str(dataInterval) + " turns: " + str(averagePassengerFlow)).draw(win)
+        TcarCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 1.7), 55), "Total cars through simulation: " + str(carCount)).draw(win)
+        TbusCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 2.1), 70), "Total busses through simulation: " + str(busCount)).draw(win)
+        TtruckCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 1.9), 85), "Total trucks through simulation: " + str(truckCount)).draw(win)
         if n % 4 == 0:
             for j in range(nBUSLanes+nLVLanes,nLanes+nBUSLanes+nLVLanes):
                 c=random.randint(0,10)
-                if c == (7 or 8 or 9):
+                if c == 7:
                     Truck(j,0,20)
-                elif c == (4 or 5 or 6):
+                elif c == 4:
                     Bus(j,0,20)
                 else:
                     r=random.randint(55,95)
                     Car(j,0,r,r,20)
         refresh(win)
         n += 1
-        
+        Tpassengers.undraw()
+        TaveragePassengerFlow.undraw()
+        TcarCount.undraw()
+        TbusCount.undraw()
+        TtruckCount.undraw()
+
         if n % dataInterval == 0:
             passengerFlow = passengers - p
             averagePassengerFlow = passengers / (n / dataInterval)
