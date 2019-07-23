@@ -18,19 +18,19 @@ active = []
 lanes = []
 
 #the number of regular lanes that the Vehicles are limited to each way.
-nLanes = 3
+nLanes = 2
 
 #the number of HOV lanes to create.
-nHOVLanes = 1
+nHOVLanes = 0
 
 #the number of LV lanes to create.
-nLVLanes = 1
+nLVLanes = 0
 
 #the number of BUS lanes to create.
-nBUSLanes = 1
+nBUSLanes = 0
 
 #width of a lane.
-width = 12
+width = 16
 w = width
 
 #height of the window.
@@ -45,6 +45,9 @@ shoulder = Line(Point(0,0), Point(0,winHeight))
 #data and information.
 passengers = 0
 passengerFlow = 0
+carCount = 0
+busCount = 0
+truckCount = 0
 
 #how many turns in between each data drop.
 dataInterval = 25
@@ -298,10 +301,21 @@ class BUS(Lane):
 
 #refreshes the entire scene.
 def refresh(window):
+
     global passengers
+    global carCount
+    global busCount
+    global truckCount
+
     toRemove = [i for i in active if(i.p1.y >= 750)]
     for i in toRemove:
         active.remove(i)
+        if i.type == "car":
+            carCount += 1
+        elif i.type == "bus":
+            busCount += 1
+        else:
+            truckCount += 1
         passengers += i.occupancy
     for i in range(len(active)):
         active[i].clear()
@@ -365,10 +379,16 @@ def main():
                     Car(j,0,r,r,20)
         refresh(win)
         n += 1
+        
         if n % dataInterval == 0:
             passengerFlow = passengers - p
             averagePassengerFlow = passengers / (n / dataInterval)
             print("Passenger flow: " + str(passengerFlow) + " passengers have been transported through the simulation since last time, averaging " + str(averagePassengerFlow) + " every " + str(dataInterval) + " turns.")
             print("Passengers transported through the simulation: " + str(passengers) + ".")
+            print("")
+            print("Number of cars transported through the simulation: " + str(carCount))
+            print("Number of busses transported through the simulation: " + str(busCount))
+            print("Number of trucks transported through the simulation: " + str(truckCount))
+
             p = passengers
 main()
