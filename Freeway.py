@@ -1,11 +1,9 @@
 '''
-
 ---------------------------------------------
 |   Freeway Simulator by Nick Peterson      |
 |                                           |
 |   Simulates traffic on a generic freeway. |
 ---------------------------------------------
-
 '''
 
 from graphics import *
@@ -21,7 +19,7 @@ lanes = []
 nLanes = 1
 
 #the number of HOV lanes to create.
-nHOVLanes = 0
+nHOVLanes = 1
 
 #the number of LV lanes to create.
 nLVLanes = 0
@@ -51,7 +49,10 @@ busCount = 0
 truckCount = 0
 
 #how many turns in between each data drop.
-dataInterval = 25
+dataInterval = 30
+
+#speed of the simulation, 1 being the standard
+simSpeed = 20
 
 #represents a vehicle.
 class Vehicle:
@@ -301,12 +302,13 @@ class BUS(Lane):
         return False
 
 #refreshes the entire scene.
-def refresh(window):
+def refresh(window,turn):
 
     global passengers
     global carCount
     global busCount
     global truckCount
+    global simSpeed
 
     toRemove = [i for i in active if(i.p1.y >= 750)]
     for i in toRemove:
@@ -321,7 +323,8 @@ def refresh(window):
     for i in range(len(active)):
         active[i].clear()
         active[i].move(0.25)
-        active[i].draw(window)
+        if turn % simSpeed == 0:
+            active[i].draw(window)
 
 #main function, puts together all the other functions.
 def main():
@@ -356,15 +359,21 @@ def main():
     for i in range(len(active)):
         active[i].draw(win)
 
-    n = 0
+    n = 1
     p = 0
     averagePassengerFlow = 0
+    Tpassengers = Text(Point(winWidth / (4 / 3), 25), "Passenger count: " + str(passengers))
+    TaveragePassengerFlow = Text(Point((winWidth / (4 / 3)) - (len("Passenger count: ") * 3.4), 40),"Passenger flow, updating every " + str(dataInterval) + " turns: " + str(averagePassengerFlow))
+    TcarCount = Text(Point((winWidth / (4 / 3)) - (len("Passenger count: ") * 1.7), 55), "Total cars through simulation: " + str(carCount))
+    TbusCount = Text(Point((winWidth / (4 / 3)) - (len("Passenger count: ") * 2.1), 70),"Total busses through simulation: " + str(busCount))
+    TtruckCount = Text(Point((winWidth / (4 / 3)) - (len("Passenger count: ") * 1.9), 85),"Total trucks through simulation: " + str(truckCount))
     while active[-1].p2.y < winHeight:
-        Tpassengers = Text(Point(winWidth / (4/3), 25), "Passenger count: " + str(passengers)).draw(win)
-        TaveragePassengerFlow = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 3.4), 40), "Passenger flow, updating every " + str(dataInterval) + " turns: " + str(averagePassengerFlow)).draw(win)
-        TcarCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 1.7), 55), "Total cars through simulation: " + str(carCount)).draw(win)
-        TbusCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 2.1), 70), "Total busses through simulation: " + str(busCount)).draw(win)
-        TtruckCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 1.9), 85), "Total trucks through simulation: " + str(truckCount)).draw(win)
+        if n % simSpeed == 0:
+            Tpassengers = Text(Point(winWidth / (4/3), 25), "Passenger count: " + str(passengers)).draw(win)
+            TaveragePassengerFlow = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 3.4), 40), "Passenger flow, updating every " + str(dataInterval) + " turns: " + str(averagePassengerFlow)).draw(win)
+            TcarCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 1.7), 55), "Total cars through simulation: " + str(carCount)).draw(win)
+            TbusCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 2.1), 70), "Total busses through simulation: " + str(busCount)).draw(win)
+            TtruckCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 1.9), 85), "Total trucks through simulation: " + str(truckCount)).draw(win)
         if n % 4 == 0:
             for j in range(nBUSLanes+nLVLanes,nLanes+nBUSLanes+nLVLanes):
                 c=random.randint(0,10)
@@ -375,17 +384,21 @@ def main():
                 else:
                     r=random.randint(55,95)
                     Car(j,0,r,r,20)
-        refresh(win)
-        n += 1
-        Tpassengers.undraw()
-        TaveragePassengerFlow.undraw()
-        TcarCount.undraw()
-        TbusCount.undraw()
-        TtruckCount.undraw()
+        refresh(win,n)
+        if n % simSpeed == 0:
+            Tpassengers.undraw()
+            TaveragePassengerFlow.undraw()
+            TcarCount.undraw()
+            TbusCount.undraw()
+            TtruckCount.undraw()
 
         if n % dataInterval == 0:
             passengerFlow = passengers - p
-            averagePassengerFlow = passengers / (n / dataInterval)
+            try:
+                averagePassengerFlow = passengers / (n / dataInterval)
+
+            except ZeroDivisionError:
+                averagePassengerFlow = 0
             print("Passenger flow: " + str(passengerFlow) + " passengers have been transported through the simulation since last time, averaging " + str(averagePassengerFlow) + " every " + str(dataInterval) + " turns.")
             print("Passengers transported through the simulation: " + str(passengers) + ".")
             print("")
@@ -394,4 +407,5 @@ def main():
             print("Number of trucks transported through the simulation: " + str(truckCount))
 
             p = passengers
+        n += 1
 main()
