@@ -116,7 +116,6 @@ class Vehicle:
         neighbors = [i for i in active if( (i.p2.x == self.x)  and ( (i.y <= self.y <= i.p2.y) or (i.y <= self.p2.y <= i.p2.y) or (self.y <= i.y <= self.p2.y) or (self.y <= i.p2.y <= self.p2.y) ) )]
 
         if (self.exit >= 0) and (exits[self.exit].start - self.p1.y <= (self.curSpeed * factor * (self.p1.x / width))) and not neighbors:
-            print("exiting freeway")
             self.exitMode = True
             return False
 
@@ -136,10 +135,10 @@ class Vehicle:
     def hasLeftNeighbor(self):
         neighbors = [i for i in active if( (i.x == self.p2.x) and ( (i.y <= self.y <= i.p2.y) or (i.y <= self.p2.y <= i.p2.y) or (self.y <= i.y <= self.p2.y) or (self.y <= i.p2.y <= self.p2.y) ) )]
 
-        if (int(self.p2.x)) == eLane.p1.x:
+        if (self.p2.x) == shoulder.p1.x:
             return True
 
-        if not lanes[int(self.p2.x / width)].isPermitted(self):
+        if (self.p2.x <= 0) or not lanes[int(self.p2.x / width)].isPermitted(self):
             return True
 
         if neighbors:
@@ -175,7 +174,7 @@ class Vehicle:
     def checkSpeed(self):
         if(self.curSpeed * 6) > self.distanceFromCollision() * 15:
 
-            if not (self.hasLeftNeighbor() and self.exitMode):
+            if not (self.hasLeftNeighbor()):
                 self.moveLeft()
                 self.curSpeed = self.topSpeed
                 return False
@@ -196,7 +195,7 @@ class Vehicle:
 
     #moves the Vehicle forward.
     def move(self,factor):
-        if (self.exit >= 0) and (exits[self.exit].start - self.p1.y <= self.curSpeed * factor * (self.p1.x / width)):
+        if (self.exit >= 0) and (exits[self.exit].start - self.p1.y <= self.curSpeed * factor * (self.p1.x / width)) and not self.hasRightNeighbor():
             self.moveRight()
             self.exitMode = True
         if not self.hasRightNeighbor():
@@ -389,6 +388,14 @@ def main():
     eLane.draw(win)
     shoulder.draw(win)
     exit.draw(win)
+
+    """n = 0
+    Car(1,0,100,100,0)
+    Car(1,100,30,30,0)
+    Truck(1,60,0)
+    while active[-1].p1.y < winHeight:
+        refresh(win,n)
+        n += 1"""
 
     for i in range(nBUSLanes+nLVLanes,nLanes+nBUSLanes+nLVLanes):
         r=random.randint(55,95)
