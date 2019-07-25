@@ -19,6 +19,8 @@ PLANNED UPDATES:
 
 POTENTIAL UPDATES:
 
+-Ability for user to change the parameters through the GUI and reset the simulation 
+
 -Traffic cops
 
 -Two-way traffic
