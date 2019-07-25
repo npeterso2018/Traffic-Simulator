@@ -15,6 +15,9 @@ active = []
 #list of all the lanes.
 lanes = []
 
+#list of all the exits.
+exits = []
+
 #the number of regular lanes that the Vehicles are limited to each way.
 nLanes = 1
 
@@ -25,10 +28,10 @@ nHOVLanes = 1
 nLVLanes = 0
 
 #the number of BUS lanes to create.
-nBUSLanes = 0
+nBUSLanes = 1
 
 #width of a lane.
-width = 16
+width = 12
 w = width
 
 #height and width of the window.
@@ -49,16 +52,19 @@ busCount = 0
 truckCount = 0
 
 #how many turns in between each data drop.
-dataInterval = 30
+dataInterval = 10
 
-#speed of the simulation, 1 being the standard
-simSpeed = 20
+#speed of the simulation, 1 being the standard.
+simSpeed = 1
+
+#speed factor.
+factor = 0.25
 
 #represents a vehicle.
 class Vehicle:
 
     #constructs a new vehicle based on a variety of factors. x and y are a point in the top left corner of the vehicle.
-    def __init__(self,lane,y,length,width,topSpeed,curSpeed,occupancy,distance):
+    def __init__(self,lane,y,length,width,topSpeed,curSpeed,occupancy,exit):
         self.x = lane * w
         self.y = y
         self.length = length
@@ -66,7 +72,8 @@ class Vehicle:
         self.topSpeed = topSpeed
         self.curSpeed = curSpeed
         self.occupancy = occupancy
-        self.distance = distance
+        self.exit = exit
+        self.exitMode = False
 
         self.type = "regular"
 
@@ -100,9 +107,20 @@ class Vehicle:
 
     #returns whether Vehicle has a neighbor on its right (negative x).
     def hasRightNeighbor(self):
+
+        global factor
+
+        if self.p1.y >= exits[self.exit].start:
+            return False
+
         neighbors = [i for i in active if( (i.p2.x == self.x)  and ( (i.y <= self.y <= i.p2.y) or (i.y <= self.p2.y <= i.p2.y) or (self.y <= i.y <= self.p2.y) or (self.y <= i.p2.y <= self.p2.y) ) )]
 
-        if (int(self.p1.x / width)) == 0:
+        if (self.exit >= 0) and (exits[self.exit].start - self.p1.y <= (self.curSpeed * factor * (self.p1.x / width))) and not neighbors:
+            print("exiting freeway")
+            self.exitMode = True
+            return False
+
+        if self.p1.x == 0:
             return True
 
         if not lanes[int(self.p1.x / width) - 1].isPermitted(self):
@@ -110,6 +128,7 @@ class Vehicle:
 
         if neighbors:
             return True
+
         else:
             return False
 
@@ -117,7 +136,7 @@ class Vehicle:
     def hasLeftNeighbor(self):
         neighbors = [i for i in active if( (i.x == self.p2.x) and ( (i.y <= self.y <= i.p2.y) or (i.y <= self.p2.y <= i.p2.y) or (self.y <= i.y <= self.p2.y) or (self.y <= i.p2.y <= self.p2.y) ) )]
 
-        if (int(self.p2.x / width)) == len(lanes):
+        if (int(self.p2.x)) == eLane.p1.x:
             return True
 
         if not lanes[int(self.p2.x / width)].isPermitted(self):
@@ -145,19 +164,18 @@ class Vehicle:
 
     #moves the vehicle one lane to the right.
     def moveRight(self):
-        if self.x >= width:
-            self.x -= width
-            self.p1.x -= width
-            self.p2.x -= width
-            self.clear()
-            self.body.move(-width,0)
-            self.cabin.move(-width,0)
+        self.x -= width
+        self.p1.x -= width
+        self.p2.x -= width
+        self.clear()
+        self.body.move(-width,0)
+        self.cabin.move(-width,0)
 
     #checks the speed of the car and makes sure it will not collide with anything in front of it.
     def checkSpeed(self):
         if(self.curSpeed * 6) > self.distanceFromCollision() * 15:
 
-            if not (self.hasLeftNeighbor()):
+            if not (self.hasLeftNeighbor() and self.exitMode):
                 self.moveLeft()
                 self.curSpeed = self.topSpeed
                 return False
@@ -178,7 +196,10 @@ class Vehicle:
 
     #moves the Vehicle forward.
     def move(self,factor):
-        if not self.hasRightNeighbor() and self.x >= width:
+        if (self.exit >= 0) and (exits[self.exit].start - self.p1.y <= self.curSpeed * factor * (self.p1.x / width)):
+            self.moveRight()
+            self.exitMode = True
+        if not self.hasRightNeighbor():
             self.moveRight()
         self.checkSpeed()
         if(self.curSpeed / 10 * 15) > self.distanceFromCollision() * 15:
@@ -301,6 +322,20 @@ class BUS(Lane):
             return True
         return False
 
+#represents a freeway exit.
+class Exit:
+
+    #constructor
+    def __init__(self,y):
+        self.start = y
+        self.end = y + 60
+        exits.append(self)
+
+    #draws the Exit as a hole in the left side.
+    def draw(self,window):
+        line = Line(Point(0,self.start),Point(0,self.end)).draw(window)
+        line.setOutline("white")
+
 #refreshes the entire scene.
 def refresh(window,turn):
 
@@ -309,8 +344,9 @@ def refresh(window,turn):
     global busCount
     global truckCount
     global simSpeed
+    global factor
 
-    toRemove = [i for i in active if(i.p1.y >= 750)]
+    toRemove = [i for i in active if((i.p1.y >= 750) or (i.p2.x <= 0))]
     for i in toRemove:
         active.remove(i)
         if i.type == "car":
@@ -322,7 +358,7 @@ def refresh(window,turn):
         passengers += i.occupancy
     for i in range(len(active)):
         active[i].clear()
-        active[i].move(0.25)
+        active[i].move(factor)
         if turn % simSpeed == 0:
             active[i].draw(window)
 
@@ -349,12 +385,14 @@ def main():
         lanesTotal += 1
     for i in range(len(lanes)):
         print("Created " + lanes[i].type + " at " + str(lanes[i].lane))
+    exit = Exit(550)
     eLane.draw(win)
     shoulder.draw(win)
+    exit.draw(win)
 
     for i in range(nBUSLanes+nLVLanes,nLanes+nBUSLanes+nLVLanes):
         r=random.randint(55,95)
-        Car(i,0,r,r,20)
+        Car(i,0,r,r,0)
 
     for i in range(len(active)):
         active[i].draw(win)
@@ -378,12 +416,12 @@ def main():
             for j in range(nBUSLanes+nLVLanes,nLanes+nBUSLanes+nLVLanes):
                 c=random.randint(0,10)
                 if c == 7:
-                    Truck(j,0,20)
+                    Truck(j,0,0)
                 elif c == 4:
-                    Bus(j,0,20)
+                    Bus(j,0,0)
                 else:
                     r=random.randint(55,95)
-                    Car(j,0,r,r,20)
+                    Car(j,0,r,r,0)
         refresh(win,n)
         if n % simSpeed == 0:
             Tpassengers.undraw()
