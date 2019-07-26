@@ -22,13 +22,13 @@ exits = []
 nLanes = 1
 
 #the number of HOV lanes to create.
-nHOVLanes = 1
+nHOVLanes = 0
 
 #the number of LV lanes to create.
 nLVLanes = 0
 
 #the number of BUS lanes to create.
-nBUSLanes = 1
+nBUSLanes = 0
 
 #width of a lane.
 width = 12
@@ -135,10 +135,7 @@ class Vehicle:
     def hasLeftNeighbor(self):
         neighbors = [i for i in active if( (i.x == self.p2.x) and ( (i.y <= self.y <= i.p2.y) or (i.y <= self.p2.y <= i.p2.y) or (self.y <= i.y <= self.p2.y) or (self.y <= i.p2.y <= self.p2.y) ) )]
 
-        if (self.p2.x) == shoulder.p1.x:
-            return True
-
-        if (self.p2.x <= 0) or not lanes[int(self.p2.x / width)].isPermitted(self):
+        if (self.p2.x <= 0) or (self.p2.x == eLane.p1.x) or not lanes[int(self.p2.x / width)].isPermitted(self):
             return True
 
         if neighbors:
