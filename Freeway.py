@@ -18,17 +18,20 @@ lanes = []
 #list of all the exits.
 exits = []
 
+#list of all the entrances.
+entrances = []
+
 #the number of regular lanes that the Vehicles are limited to each way.
 nLanes = 1
 
 #the number of HOV lanes to create.
-nHOVLanes = 0
+nHOVLanes = 1
 
 #the number of LV lanes to create.
 nLVLanes = 0
 
 #the number of BUS lanes to create.
-nBUSLanes = 0
+nBUSLanes = 1
 
 #width of a lane.
 width = 12
@@ -169,6 +172,8 @@ class Vehicle:
 
     #checks the speed of the car and makes sure it will not collide with anything in front of it.
     def checkSpeed(self):
+        if not lanes[int(self.p1.x / 12)].isPermitted(self) and not self.exitMode and not self.hasLeftNeighbor():
+            self.moveLeft()
         if(self.curSpeed * 6) > self.distanceFromCollision() * 15:
 
             if not (self.hasLeftNeighbor()):
@@ -321,7 +326,7 @@ class BUS(Lane):
 #represents a freeway exit.
 class Exit:
 
-    #constructor
+    #constructor.
     def __init__(self,y):
         self.start = y
         self.end = y + 60
@@ -331,6 +336,20 @@ class Exit:
     def draw(self,window):
         line = Line(Point(0,self.start),Point(0,self.end)).draw(window)
         line.setOutline("white")
+
+#represents a freeway entrance.
+class Entrance:
+
+    #constructor.
+    def __init__(self,y):
+        self.start = y
+        self.end = y+60
+
+    #draws the Entrance as a hole in the left side.
+    def draw(self,window):
+        line = Line(Point(0,self.start),Point(0,self.end)).draw(window)
+        line.setOutline("white")
+        entrances.append(self)
 
 #refreshes the entire scene.
 def refresh(window,turn):
@@ -358,6 +377,15 @@ def refresh(window,turn):
         if turn % simSpeed == 0:
             active[i].draw(window)
 
+#produces a Vehicle at the given entrance.
+def produce(window,entrance,type,exit):
+    if type == "bus":
+        Bus(0,entrance.start,exit).draw(window)
+    elif type == "truck":
+        Truck(0,entrance.start,exit).draw(window)
+    else:
+        Car(0,entrance.start,random.randint(55,85),45,exit).draw(window)
+
 #main function, puts together all the other functions.
 def main():
 
@@ -381,9 +409,11 @@ def main():
         lanesTotal += 1
     for i in range(len(lanes)):
         print("Created " + lanes[i].type + " at " + str(lanes[i].lane))
+    entrance = Entrance(250)
     exit = Exit(550)
     eLane.draw(win)
     shoulder.draw(win)
+    entrance.draw(win)
     exit.draw(win)
 
     """n = 0
@@ -417,6 +447,7 @@ def main():
             TbusCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 2.1), 70), "Total busses through simulation: " + str(busCount)).draw(win)
             TtruckCount = Text(Point((winWidth / (4/3)) - (len("Passenger count: ") * 1.9), 85), "Total trucks through simulation: " + str(truckCount)).draw(win)
         if n % 4 == 0:
+            produce(win,entrances[0],"car",-1)
             for j in range(nBUSLanes+nLVLanes,nLanes+nBUSLanes+nLVLanes):
                 c=random.randint(0,10)
                 if c == 7:
