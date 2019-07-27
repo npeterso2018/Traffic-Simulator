@@ -21,6 +21,9 @@ exits = []
 #list of all the entrances.
 entrances = []
 
+#list of all the toll booths.
+booths = []
+
 #the number of regular lanes that the Vehicles are limited to each way.
 nLanes = 1
 
@@ -95,18 +98,26 @@ class Vehicle:
 
     #gets the y coordinate of the closest Vehicle in front.
     def distanceFromCollision(self):
-        y = [i for i in active if (i.x == self.x) and (i.y > self.y)]
+        y = [i for i in active if (i.x == self.x) and (i.p1.y > self.p2.y)]
         y.sort()
         if y == []:
             return 999
-        return(y[0].y - (self.y + self.length))
+        return y[0].y - (self.p2.y)
 
     #gets the closest Vehicle in front.
     def closestVehicleFront(self):
-        y = [i for i in active if (i.x == self.x) and (i.y > self.y)]
+        y = [i for i in active if (i.x == self.x) and (i.p1.y > self.p2.y)]
         y.sort()
         if y:
             return y[0]
+
+    #gets the clost Toll Booth in front.
+    def distanceFromTollBooth(self):
+        y = [i for i in booths if (i.loc > self.p2.y)]
+        y.sort()
+        if y == []:
+            return 999
+        return y[0].loc - (self.p2.y)
 
     #returns whether Vehicle has a neighbor on its right (negative x).
     def hasRightNeighbor(self):
@@ -172,6 +183,9 @@ class Vehicle:
 
     #checks the speed of the car and makes sure it will not collide with anything in front of it.
     def checkSpeed(self):
+
+        global factor
+
         if not lanes[int(self.p1.x / 12)].isPermitted(self) and not self.exitMode and not self.hasLeftNeighbor():
             self.moveLeft()
         if(self.curSpeed * 6) > self.distanceFromCollision() * 15:
@@ -187,6 +201,10 @@ class Vehicle:
                 return False
             self.curSpeed = self.closestVehicleFront().curSpeed
             return True
+
+        if(self.distanceFromTollBooth() / int(self.curSpeed * factor) < self.curSpeed - (10 * (self.distanceFromTollBooth() / int(self.curSpeed * factor)))) and self.curSpeed > 30:
+            print("tollbooth coming!")
+            self.curSpeed -= 10
 
     #draws the Vehicle as a red rectangle.
     def draw(self,window):
@@ -344,12 +362,32 @@ class Entrance:
     def __init__(self,y):
         self.start = y
         self.end = y+60
+        entrances.append(self)
 
     #draws the Entrance as a hole in the left side.
     def draw(self,window):
         line = Line(Point(0,self.start),Point(0,self.end)).draw(window)
         line.setOutline("white")
-        entrances.append(self)
+
+#represents a toll booth
+class TollBooth:
+
+    global width
+    global lanes
+
+    #the total amount of money made by cars travelling through this booth.
+    totalProfit = 0
+
+    #constructor.
+    def __init__(self,y,price):
+        self.toll = price
+        self.loc = y
+        booths.append(self)
+
+    #draws the booth.
+    def draw(self,window):
+        body = Rectangle(Point(0,self.loc),Point(width * len(lanes),self.loc + 20)).draw(window)
+        body.setFill("red")
 
 #refreshes the entire scene.
 def refresh(window,turn):
@@ -394,7 +432,7 @@ def main():
 
     lanesTotal = 0
 
-    #shows the lanes of the road
+    #shows the lanes of the road.
     for i in range(nBUSLanes):
         BUS(i).draw(win)
         lanesTotal += 1
@@ -407,14 +445,19 @@ def main():
     for i in range(lanesTotal,nHOVLanes + lanesTotal):
         HOV(i).draw(win)
         lanesTotal += 1
-    for i in range(len(lanes)):
-        print("Created " + lanes[i].type + " at " + str(lanes[i].lane))
-    entrance = Entrance(250)
-    exit = Exit(550)
+    for lane in lanes:
+        print("Created " + lane.type + " at " + str(lane.lane))
+    Entrance(250)
+    Exit(550)
+    TollBooth(360,1.75)
     eLane.draw(win)
     shoulder.draw(win)
-    entrance.draw(win)
-    exit.draw(win)
+    for ent in entrances:
+        ent.draw(win)
+    for ex in exits:
+        ex.draw(win)
+    for b in booths:
+        b.draw(win)
 
     """n = 0
     Car(1,0,100,100,0)
@@ -472,6 +515,7 @@ def main():
 
             except ZeroDivisionError:
                 averagePassengerFlow = 0
+
             print("Passenger flow: " + str(passengerFlow) + " passengers have been transported through the simulation since last time, averaging " + str(averagePassengerFlow) + " every " + str(dataInterval) + " turns.")
             print("Passengers transported through the simulation: " + str(passengers) + ".")
             print("")
