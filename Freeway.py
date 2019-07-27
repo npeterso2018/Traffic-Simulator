@@ -25,7 +25,7 @@ entrances = []
 booths = []
 
 #the number of regular lanes that the Vehicles are limited to each way.
-nLanes = 1
+nLanes = 3
 
 #the number of HOV lanes to create.
 nHOVLanes = 1
@@ -56,6 +56,7 @@ passengerFlow = 0
 carCount = 0
 busCount = 0
 truckCount = 0
+profit = 0
 
 #how many turns in between each data drop.
 dataInterval = 10
@@ -111,13 +112,21 @@ class Vehicle:
         if y:
             return y[0]
 
-    #gets the clost Toll Booth in front.
+    #gets the closest Toll Booth in front.
+    def closestTollBooth(self):
+        y = [i for i in booths if (i.loc + 10 > self.p2.y)]
+        y.sort()
+        if y == []:
+            return
+        return y[0]
+
+    #gets the distance of the closest Toll Booth in front.
     def distanceFromTollBooth(self):
-        y = [i for i in booths if (i.loc > self.p2.y)]
+        y = [i for i in booths if (i.loc + 10 > self.p2.y)]
         y.sort()
         if y == []:
             return 999
-        return y[0].loc - (self.p2.y)
+        return y[0].loc + 10 - (self.p2.y)
 
     #returns whether Vehicle has a neighbor on its right (negative x).
     def hasRightNeighbor(self):
@@ -185,26 +194,32 @@ class Vehicle:
     def checkSpeed(self):
 
         global factor
+        global profit
+
+        if (self.distanceFromTollBooth() / int(self.curSpeed * factor) < self.curSpeed - (10 * (self.distanceFromTollBooth() / int(self.curSpeed * factor)))) and self.curSpeed > 30:
+            self.curSpeed -= 10
+
+        else:
+            self.curSpeed = self.topSpeed
+
+        if(self.distanceFromTollBooth() < 10):
+            profit += self.closestTollBooth().toll
 
         if not lanes[int(self.p1.x / 12)].isPermitted(self) and not self.exitMode and not self.hasLeftNeighbor():
             self.moveLeft()
+
         if(self.curSpeed * 6) > self.distanceFromCollision() * 15:
 
             if not (self.hasLeftNeighbor()):
                 self.moveLeft()
                 self.curSpeed = self.topSpeed
-                return False
 
-            if not (self.hasRightNeighbor()):
+            elif not (self.hasRightNeighbor()):
                 self.moveRight()
                 self.curSpeed = self.topSpeed
-                return False
-            self.curSpeed = self.closestVehicleFront().curSpeed
-            return True
 
-        if(self.distanceFromTollBooth() / int(self.curSpeed * factor) < self.curSpeed - (10 * (self.distanceFromTollBooth() / int(self.curSpeed * factor)))) and self.curSpeed > 30:
-            print("tollbooth coming!")
-            self.curSpeed -= 10
+            else:
+                self.curSpeed = self.closestVehicleFront().curSpeed
 
     #draws the Vehicle as a red rectangle.
     def draw(self,window):
@@ -375,9 +390,6 @@ class TollBooth:
     global width
     global lanes
 
-    #the total amount of money made by cars travelling through this booth.
-    totalProfit = 0
-
     #constructor.
     def __init__(self,y,price):
         self.toll = price
@@ -449,7 +461,7 @@ def main():
         print("Created " + lane.type + " at " + str(lane.lane))
     Entrance(250)
     Exit(550)
-    TollBooth(360,1.75)
+    TollBooth(460,1.75)
     eLane.draw(win)
     shoulder.draw(win)
     for ent in entrances:
@@ -522,6 +534,8 @@ def main():
             print("Number of cars transported through the simulation: " + str(carCount))
             print("Number of busses transported through the simulation: " + str(busCount))
             print("Number of trucks transported through the simulation: " + str(truckCount))
+            print("")
+            print("Cash made: $" + str(profit))
 
             p = passengers
         n += 1
