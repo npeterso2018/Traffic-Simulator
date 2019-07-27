@@ -9,7 +9,7 @@ In PyCharm CE, go to Preferences... > Project: Freeway Simulator > Project Inter
 
 PLANNED UPDATES:
 
--Toll booths and Toll lanes
+-Toll lanes
 
 -Ability to simulate without graphics, but on a much larger scale
 
