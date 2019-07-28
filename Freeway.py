@@ -203,7 +203,12 @@ class Vehicle:
             self.curSpeed = self.topSpeed
 
         if(self.distanceFromTollBooth() < 10):
-            profit += self.closestTollBooth().toll
+            if self.type == "car":
+                profit += self.closestTollBooth().toll
+            elif self.type == "bus":
+                profit += self.closestTollBooth().toll * 4
+            else:
+                profit += self.closestTollBooth().toll * 5
 
         if not lanes[int(self.p1.x / 12)].isPermitted(self) and not self.exitMode and not self.hasLeftNeighbor():
             self.moveLeft()
