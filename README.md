@@ -1,5 +1,5 @@
 # Traffic-Simulator
-[WORK IN PROGRESS] Fairly rudimentary graphical simulation of traffic in Python.
+[WORK IN PROGRESS] Graphical simulation of traffic in Python.
 
 A simulation of traffic, inspired by (the little) traffic on Interstate 95 in Maine, near Colby College.
 
