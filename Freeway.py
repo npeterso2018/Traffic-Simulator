@@ -28,13 +28,19 @@ booths = []
 nLanes = 3
 
 #the number of HOV lanes to create.
-nHOVLanes = 1
+nHOVLanes = 0
+
+#the number of Paid HOV lanes to create.
+nPHOVLanes = 1
 
 #the number of LV lanes to create.
 nLVLanes = 0
 
 #the number of BUS lanes to create.
 nBUSLanes = 1
+
+#total number of lanes.
+nTotalLanes = nLanes + nHOVLanes + nPHOVLanes + nLVLanes + nBUSLanes
 
 #width of a lane.
 width = 12
@@ -45,7 +51,7 @@ winHeight = 750
 winWidth = 500
 
 #the inner limit of the lanes.
-eLane = Line(Point((nLanes + nHOVLanes + nLVLanes + nBUSLanes) * width, 0), Point((nLanes + nHOVLanes + nLVLanes + nBUSLanes) * width, winHeight))
+eLane = Line(Point((nTotalLanes) * width, 0), Point((nTotalLanes) * width, winHeight))
 
 #the outer limit of the lanes.
 shoulder = Line(Point(0,0), Point(0,winHeight))
@@ -83,6 +89,7 @@ class Vehicle:
         self.exitMode = False
 
         self.type = "regular"
+        self.paid = []
 
         self.p1 = Point(self.x,y)
         self.p2 = Point(self.x+width,y+length)
@@ -99,11 +106,10 @@ class Vehicle:
 
     #gets the y coordinate of the closest Vehicle in front.
     def distanceFromCollision(self):
-        y = [i for i in active if (i.x == self.x) and (i.p1.y > self.p2.y)]
-        y.sort()
-        if y == []:
-            return 999
-        return y[0].y - (self.p2.y)
+        v = self.closestVehicleFront()
+        if v:
+            return v.y - self.p2.y
+        return 999
 
     #gets the closest Vehicle in front.
     def closestVehicleFront(self):
@@ -111,6 +117,7 @@ class Vehicle:
         y.sort()
         if y:
             return y[0]
+        return
 
     #gets the closest Toll Booth in front.
     def closestTollBooth(self):
@@ -122,11 +129,10 @@ class Vehicle:
 
     #gets the distance of the closest Toll Booth in front.
     def distanceFromTollBooth(self):
-        y = [i for i in booths if (i.loc + 10 > self.p2.y)]
-        y.sort()
-        if y == []:
-            return 999
-        return y[0].loc + 10 - (self.p2.y)
+        t = self.closestTollBooth()
+        if t:
+            return t.loc + 10 - self.p2.y
+        return 999
 
     #returns whether Vehicle has a neighbor on its right (negative x).
     def hasRightNeighbor(self):
@@ -235,6 +241,12 @@ class Vehicle:
 
     #moves the Vehicle forward.
     def move(self,factor):
+
+        global profit
+
+        if (self.p1.x == lanes[int(self.p1.x / 12)].type == "pHOV" and self.occupancy < 2 and not (lanes[int(self.p1.x / 12)] in self.paid)):
+            self.paid.append(lanes[int(self.p1.x / 12)])
+            profit += 1.25
         if (self.exit >= 0) and (exits[self.exit].start - self.p1.y <= self.curSpeed * factor * (self.p1.x / width)) and not self.hasRightNeighbor():
             self.moveRight()
             self.exitMode = True
@@ -286,7 +298,8 @@ class Lane:
         if self.lane == 0:
             for i in range(int(winHeight / 10)):
                 Line(Point(width * (self.lane + 1), i * 20), Point(width * (self.lane + 1), i * 20 + 10)).draw(window)
-        elif self.lane == len(lanes):
+        elif self.lane == len(lanes) - 1:
+            print("True")
             return
         else:
             for i in range(int(winHeight / 10)):
@@ -358,6 +371,28 @@ class BUS(Lane):
     #determines if the given Vehicle will be permitted into the Lane.
     def isPermitted(self,vehicle):
         if vehicle.type == "bus":
+            return True
+        return False
+
+class pHOV(Lane):
+
+    #constructor.
+    def __init__(self,lane):
+        self.lane = lane
+        self.x = lane * width
+        self.type = "pHOV"
+        lanes.append(self)
+
+    #draws the lane with a light green shade.
+    def draw(self,window):
+        super().draw(window)
+        rect = Rectangle(Point(self.x+1,0),Point(self.x+(width-1),winHeight)).draw(window)
+        rect.setFill("springgreen")
+        rect.setOutline("springgreen")
+
+    #determines if the given Vehicle will be permitted into the Lane.
+    def isPermitted(self,vehicle):
+        if(vehicle.type == "car"):
             return True
         return False
 
@@ -451,19 +486,24 @@ def main():
 
     #shows the lanes of the road.
     for i in range(nBUSLanes):
-        BUS(i).draw(win)
+        BUS(i)
         lanesTotal += 1
     for i in range(lanesTotal, lanesTotal + nLVLanes):
-        LV(i).draw(win)
+        LV(i)
         lanesTotal += 1
     for i in range(lanesTotal, nLanes + lanesTotal):
-        Lane(i).draw(win)
+        Lane(i)
+        lanesTotal += 1
+    for i in range(lanesTotal,nPHOVLanes + lanesTotal):
+        pHOV(i)
         lanesTotal += 1
     for i in range(lanesTotal,nHOVLanes + lanesTotal):
-        HOV(i).draw(win)
+        HOV(i)
         lanesTotal += 1
     for lane in lanes:
         print("Created " + lane.type + " at " + str(lane.lane))
+        lane.draw(win)
+    print(len(lanes))
     Entrance(250)
     Exit(550)
     TollBooth(460,1.75)
