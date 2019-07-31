@@ -4,6 +4,10 @@ Interesting things that I've found from experimenting with the simulation:
 
 -HOV Lanes don't seem to help the overall flow of traffic very much. It will, however, incentivize people to carpool.
 
+TOLL BOOTHS:
+
 -Toll booths make a lot of money quickly, but kind of destroy the flow of traffic.
 
 -Toll booths also ruin the purpose of the bus and large-vehicle lanes by making it so that cars coming in from the entrance(s) cannot merge and get out of those lanes, by creating a gridlock of trucks and busses in the regular lanes.
+
+-Toll booths don't have much of an effect on the traffic in a one-lane road because the cars have to maintain the speed of the slowest vehicle on the road.
