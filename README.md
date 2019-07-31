@@ -7,6 +7,10 @@ I created this in PyCharm Community Edition. This project needs Zelle's Graphics
 
 In PyCharm CE, go to Preferences... > Project: Freeway Simulator > Project Interpreter. Press the plus sign in the bottom left corner and search "Graphics." You want the package created by John Zelle. Install the package, and then the program should run correctly. Poke around and change up the file, take a look, hopefully I explained each function well! There are many different variables at the beginning of the file that can be changed!
 
+To see a scenario, download one of the files prefixed with SCENARIO.
+
+The simulator can be fun to just sit back and watch...
+
 PLANNED UPDATES:
 
 -Ability to simulate without graphics, but on a much larger scale
