@@ -139,12 +139,12 @@ class Vehicle:
 
         global factor
 
-        if self.p1.y >= exits[self.exit].start:
+        if exits and self.p1.y >= exits[self.exit].start:
             return False
 
         neighbors = [i for i in active if( (i.p2.x == self.x)  and ( (i.y <= self.y <= i.p2.y) or (i.y <= self.p2.y <= i.p2.y) or (self.y <= i.y <= self.p2.y) or (self.y <= i.p2.y <= self.p2.y) ) )]
 
-        if (self.exit >= 0) and (exits[self.exit].start - self.p1.y <= (self.curSpeed * factor * (self.p1.x / width))) and not neighbors:
+        if exits and (self.exit >= 0) and (exits[self.exit].start - self.p1.y <= (self.curSpeed * factor * (self.p1.x / width))) and not neighbors:
             self.exitMode = True
             return False
 
@@ -247,7 +247,7 @@ class Vehicle:
         if (self.p1.x == lanes[int(self.p1.x / 12)].type == "pHOV" and self.occupancy < 2 and not (lanes[int(self.p1.x / 12)] in self.paid)):
             self.paid.append(lanes[int(self.p1.x / 12)])
             profit += 1.25
-        if (self.exit >= 0) and (exits[self.exit].start - self.p1.y <= self.curSpeed * factor * (self.p1.x / width)) and not self.hasRightNeighbor():
+        if exits and (self.exit >= 0) and (exits[self.exit].start - self.p1.y <= self.curSpeed * factor * (self.p1.x / width)) and not self.hasRightNeighbor():
             self.moveRight()
             self.exitMode = True
         if not self.hasRightNeighbor():
